@@ -627,12 +627,17 @@ class OpenAIServing:
 
         if max_tokens is not None and \
             token_num + max_tokens > self.max_model_len:
-            raise ValueError(
-                "'max_tokens' or 'max_completion_tokens' is too large: "
-                f"{max_tokens}. This model's maximum context length is "
-                f"{self.max_model_len} tokens and your request has "
-                f"{token_num} input tokens ({max_tokens} > {self.max_model_len}"
-                f" - {token_num}).")
+                # auto-adjust max_tokens
+                if request.max_completion_tokens:
+                    request.max_completion_tokens = self.max_model_len - token_num
+                else:
+                    request.max_tokens = self.max_model_len - token_num
+            # raise ValueError(
+            #     "'max_tokens' or 'max_completion_tokens' is too large: "
+            #     f"{max_tokens}. This model's maximum context length is "
+            #     f"{self.max_model_len} tokens and your request has "
+            #     f"{token_num} input tokens ({max_tokens} > {self.max_model_len}"
+            #     f" - {token_num}).")
 
         return TextTokensPrompt(prompt=input_text, prompt_token_ids=input_ids)
 
